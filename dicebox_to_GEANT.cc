@@ -18,38 +18,54 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 #include "Fk.h"
+#include "RTG_energy.h"
 
 using namespace std;
 
 int main(int argc, char **argv) {
-  if (argc!=3){
-    cout << endl;
-    cout << "need directory as 1st argument" << endl;
-    cout << "need cascade file name as 2nd argument" << endl;
-    exit(-1);
+  if (argc!=4){
+    cerr << "need atomic number Z as 1st argument\n";
+    cerr << "need directory as 2nd argument\n";
+    cerr << "need cascade file name as 3rd argument\n";
+    return 1;
+  }
+  int Z;
+  try {
+    Z = std::stoi(argv[1]);
+    if(!(Z>0&&Z<92)){
+      std::cerr << "I don't have RTG energy for Z = " << Z << " , exiting. \n";
+      return 2;
+    }
+    std::cout << "So cascades are for Z = " << Z << " with RTG energy " << 1e3*RTG_energy(Z) << " keV, correct? \n";
+  } catch (const std::invalid_argument&) {
+    std::cerr << "Invalid input: not a number\n";
+    return 3;
+  } catch (const std::out_of_range&) {
+    std::cerr << "Invalid input: number out of range\n";
+    return 4;
   }
   DIR *d;
   struct dirent *dir;
-  char* path = argv[1];
+  char* path = argv[2];
   d = opendir(path);
   if (!d) {
     cout << "directory " << dir->d_name << " can not be opened" << endl;
-    exit(-2);
+    return 5;
   }
 
-  std::ifstream file(Form("%s/%s",argv[1],argv[2]),ios::in);
+  std::ifstream file(Form("%s/%s",argv[2],argv[3]),ios::in);
   if(file.fail()){
-    cout << "file " << argv[1] << "/" << argv[2] << " not found" << endl;
-    exit(-3);
+    cout << "file " << argv[2] << "/" << argv[3] << " not found" << endl;
+    return 6;
   }
-  std::ofstream outfile(Form("%s/%s.out",argv[1],argv[2]),ios::out);
+  std::ofstream outfile(Form("%s/%s.out",argv[2],argv[3]),ios::out);
   if(!outfile.is_open()){
-    cout << "unable to open output file " << argv[1] << "/" << argv[2] << ".out" << endl;
-    exit(-4);
-  }  
+    cout << "unable to open output file " << argv[2] << "/" << argv[3] << ".out" << endl;
+    return 7;
+  }
 
   gStyle->SetPadTickX(1);  gStyle->SetPadTickY(1);
-  const double RTG_K=(0.0028224-0.0003); //Zn(0.0097-0.0012) //Nb (0.006539-0.00065);//Mn (0.010367-0.0011432);//Ga (0.007113-0.00072); //Fe (0.008979-0.00095); //Cu 
+  const double RTG_K=RTG_energy(Z);
   int iline=0;
   vector<double> temp, Eg, Ee, Epair, Spin, Delta, IC, Angle;
   vector<int> L;
@@ -57,7 +73,7 @@ int main(int argc, char **argv) {
   string line;
   float Ak,Bk;
   TF1 *W = new TF1("W(theta)","1+[0]*ROOT::Math::legendre(2,TMath::Cos(x))+[1]*ROOT::Math::legendre(4,TMath::Cos(x))",-TMath::Pi(),+TMath::Pi());
-  TFile *root_file = new TFile(Form("%s/%s.root",argv[1],argv[2]),"update");
+  TFile *root_file = new TFile(Form("%s/%s.root",argv[2],argv[3]),"update");
 
   // Tree and its branch declaration
   TTree *cascades = new TTree("cascades","cascades");
@@ -68,7 +84,7 @@ int main(int argc, char **argv) {
   cascades->Branch("delta",&Delta);
   cascades->Branch("angle",&Angle);
 
-  cout << "reading file " << argv[1] << "/"<< argv[2] << endl;
+  cout << "reading file " << argv[2] << "/"<< argv[3] << endl;
   while (getline(file,line)){
     ++iline;
       // if (iline%10000==0) cout << iline << endl;
@@ -182,7 +198,7 @@ int main(int argc, char **argv) {
       }
     }
   }
-  cout << "done reading " << argv[1] << "/"<< argv[2] << endl;
+  cout << "done reading " << argv[2] << "/"<< argv[3] << endl;
   file.close();
   outfile.close();
 
@@ -223,7 +239,7 @@ int main(int argc, char **argv) {
   gPad->SetLogy();
   cascades->Draw("electrons>>h_elns(1000,0,10)");
 
-  canv->SaveAs(Form("%s/%s.pdf",argv[1],argv[2]));
+  canv->SaveAs(Form("%s/%s.pdf",argv[2],argv[3]));
 
   root_file->Close();
   cout << "file " << root_file->GetName() << " was written" << endl;

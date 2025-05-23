@@ -7,7 +7,7 @@ BIN		= ./
 CC		= g++
 CCFLAG	= -O -Wall -fPIC -lstdc++
 
-dicebox_to_GEANT:		Fk.o dicebox_to_GEANT.o
+dicebox_to_GEANT:		RTG_energy.o Fk.o dicebox_to_GEANT.o
 ifeq ($(strip $(ROOTCHECK)),true)
 	$(info have good ROOT version [${ROOTVERSION}])
 else
@@ -23,6 +23,10 @@ dicebox_to_GEANT.o:		dicebox_to_GEANT.cc
 
 Fk.cc:					Fk.h
 Fk.o:					Fk.cc
+	$(CC) -c $^
+
+RTG_energy.cc:			RTG_energy.h
+RTG_energy.o:			RTG_energy.cc
 	$(CC) -c $^
 
 clean:

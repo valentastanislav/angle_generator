@@ -1,0 +1,1 @@
+double RTG_energy(int );
