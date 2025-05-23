@@ -5,6 +5,7 @@ double RTG_energy(int Z){
         L2_half_binding[i]=0.0;
     }
 //    K_binding[]=.; L2_half_binding[]=; //
+//  from https://xdb.lbl.gov/Section1/
     K_binding[1]=13.6; L2_half_binding[1]=0; //H
     K_binding[2]=24.6; L2_half_binding[2]=0; //He
     K_binding[3]=54.7; L2_half_binding[3]=0; //Li
